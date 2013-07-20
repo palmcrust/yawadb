@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<resources>
+    <dimen name="listPadding">4dp</dimen>    
+    <dimen name="widgetMargin">8dp</dimen>    
+    <dimen name="btnSize">30dp</dimen>
+    <dimen name="listStatTxtSize">18dp</dimen>
+    <dimen name="listActnTxtSize">20dp</dimen>
+    
+    <dimen name="configTitleTxtSize">20dp</dimen>
+    <dimen name="boxTitleTxtSize">18dp</dimen>
+    <dimen name="boxValueTxtSize">20dp</dimen>
+    <dimen name="configPaddingVert">4dp</dimen>    
+    <dimen name="configPaddingHorz">8dp</dimen>    
+    
+    <dimen name="infoTabPaddingVert">4dp</dimen>
+    <dimen name="infoFooterHeight">65dp</dimen>
+</resources>

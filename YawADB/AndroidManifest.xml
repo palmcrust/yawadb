@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!DOCTYPE manifest>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.palmcrust.yawadb"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="1"
+        android:targetSdkVersion="17" />
+
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <!-- uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/-->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        
+        <receiver android:name="com.palmcrust.yawadb.YawAdbProvider">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <!-- action android:name="android.appwidget.action.APPWIDGET_DELETED" /-->
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                    android:resource="@xml/appwidget_info" />
+        </receiver>
+        
+        <activity
+           	android:name="com.palmcrust.yawadb.PopupActivity"
+         	android:configChanges="keyboard|keyboardHidden|orientation|screenSize" >
+   	    	<intent-filter>
+               	<action android:name="android.intent.action.MAIN" />
+               	<category android:name="android.intent.category.LAUNCHER" />
+       		</intent-filter>
+       	</activity>
+        
+        <activity
+           	android:name="com.palmcrust.yawadb.ConfigActivity"
+         	android:configChanges="keyboard|keyboardHidden|orientation|screenSize" />
+        
+        <activity
+           	android:name="com.palmcrust.yawadb.InfoActivity"
+	        android:theme="@style/InfoTheme" 
+         	android:configChanges="keyboard|keyboardHidden|orientation|screenSize" />
+        
+        <service
+            android:name="com.palmcrust.yawadb.YawAdbService"
+            android:exported="false" />	        	    
+	        
+    </application>
+
+</manifest>

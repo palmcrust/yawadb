@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android" 
+    android:minWidth="@dimen/btnSize"
+    android:minHeight="@dimen/btnSize" 
+    android:widgetCategory="home_screen"
+    android:resizeMode="none" 
+    android:initialLayout="@layout/widget"
+	android:previewImage="@drawable/ic_launcher" />
+   

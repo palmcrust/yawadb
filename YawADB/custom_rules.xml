@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<project name="YawADB-custom-rules" default="help">
+   <target name="adb_connect">
+	  	<exec executable="${sdk.dir}/platform-tools/adb.exe">
+    		<arg value="connect"/>
+    		<arg value="${device.ip}"/>
+  		</exec>
+	</target>
+	
+      <target name="adb_restart">
+	  	<exec executable="${sdk.dir}/platform-tools/adb.exe">
+    		<arg value="kill-server"/>
+  		</exec>
+	  	<exec executable="${sdk.dir}/platform-tools/adb.exe">
+    		<arg value="start-server"/>
+  		</exec>
+	  </target>
+   
+   
+</project>
