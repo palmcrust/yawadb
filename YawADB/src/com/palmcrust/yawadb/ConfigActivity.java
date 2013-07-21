@@ -36,12 +36,16 @@ public class ConfigActivity extends Activity {
 	protected Resources rsrc;
 	protected YawAdbOptions options;
 	protected boolean asWidget;
+	private String oldIface;
+	private int oldPort; 
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		rsrc = getResources();
 		options = new YawAdbOptions(this);
+		oldIface = options.ifaceName.getString();
+		oldPort = options.portNumber.getIntValue();
 		asWidget = getIntent().getBooleanExtra(YawAdbConstants.AsWidgetExtra, false);
 		setContentView(R.layout.config);
 		populateFields();
@@ -165,8 +169,6 @@ public class ConfigActivity extends Activity {
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			String oldIface = options.ifaceName.getString();
-			int oldPort = options.portNumber.getIntValue();
 
 			if (!applyChanges()) return true;
 			
@@ -220,3 +222,4 @@ public class ConfigActivity extends Activity {
 	}
 
 }
+
