@@ -112,6 +112,7 @@ public class PopupActivity extends Activity {
 		
 		tv = (TextView) findViewById(R.id.toggleMode);
 		if (toggleModeEnabled) {
+			tv.setVisibility(View.VISIBLE);
 			boolean tag;
 			if (stat == StatusAnalyzer.Status.DOWN) {
 				tv.setText(R.string.actEnable);
@@ -195,6 +196,7 @@ public class PopupActivity extends Activity {
 			if (resultCode == ConfigActivity.NewConnectionSettings) {
 				StatusAnalyzer analyzer = new StatusAnalyzer(this, ifaceName);
 				evaluateIfaceName();
+				refreshText();
 				if (analyzer.analyze() == StatusAnalyzer.Status.UP)
 					changeAdbConnection(true);
 			}
@@ -310,3 +312,4 @@ public class PopupActivity extends Activity {
 	}
 
 }
+
