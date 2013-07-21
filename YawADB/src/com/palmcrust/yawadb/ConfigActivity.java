@@ -36,7 +36,6 @@ public class ConfigActivity extends Activity {
 	protected Resources rsrc;
 	protected YawAdbOptions options;
 	protected boolean asWidget;
-	private String oldIface;
 	private int oldPort; 
 	
 	@Override
@@ -44,7 +43,6 @@ public class ConfigActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		rsrc = getResources();
 		options = new YawAdbOptions(this);
-		oldIface = options.ifaceName.getString();
 		oldPort = options.portNumber.getIntValue();
 		asWidget = getIntent().getBooleanExtra(YawAdbConstants.AsWidgetExtra, false);
 		setContentView(R.layout.config);
@@ -55,7 +53,7 @@ public class ConfigActivity extends Activity {
 	private void populateFields() {
 		for (YawAdbOptions.Option option : options.allOptions) {
 			ViewGroup box = (ViewGroup)findViewById(option.getBoxId());
-			if ((option == options.autoRefresh) && !asWidget) { 
+			if ((option == options.autoRefresh || option == options.autoUsb) && !asWidget) { 
 				box.setVisibility(View.GONE);
 				continue;
 			}
@@ -172,8 +170,7 @@ public class ConfigActivity extends Activity {
 
 			if (!applyChanges()) return true;
 			
-			if (options.portNumber.getIntValue() != oldPort ||
-			    !options.ifaceName.getString().equals(oldIface))		
+			if (options.portNumber.getIntValue() != oldPort)
 				setResult(ConfigActivity.NewConnectionSettings);
 			
 			options.savePreferences();

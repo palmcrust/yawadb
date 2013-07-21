@@ -26,6 +26,7 @@
         android:id="@+id/boxValue"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+		android:layout_marginLeft="6dp"        
         android:layout_gravity="right|center_vertical"
         android:gravity="right|center_vertical"
 		android:textSize="@dimen/boxValueTxtSize"    

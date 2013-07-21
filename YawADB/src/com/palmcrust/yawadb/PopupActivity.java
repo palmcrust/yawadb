@@ -1,5 +1,4 @@
 /* 
-   PopupActivity. Maintains YawADB pop-up list of tasks
    This is the main activity for YawADB application. 
    Copyright (C) 2013 Michael Glickman (Australia) <palmcrust@gmail.com>
 
@@ -28,17 +27,21 @@ import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
-import android.os.Message;
+import android.os.Handler;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class PopupActivity extends Activity {
+import com.palmcrust.yawadb.StatusAnalyzer.Status;
+
+public class PopupActivity extends Activity  {
 	private static final int ConfigActivityRequestCode = 666;
+	
+	protected boolean asWidget;
+	protected StatusAnalyzer analyzer;
+
 	private Thread adbThread;
-	private boolean asWidget;
-	private String ifaceName;
 	private BroadcastReceiver bcastReceiver;
 
 	@Override
@@ -48,14 +51,13 @@ public class PopupActivity extends Activity {
 		setContentView(R.layout.list);
 		adbThread = null;
 		asWidget = getIntent().getBooleanExtra(YawAdbConstants.AsWidgetExtra, false);
-//		if (asWidget) refreshStatus();
-		
-		evaluateIfaceName();
-		
+
+		analyzer = new StatusAnalyzer(this);
 		refreshText();
 
 		bcastReceiver= new PopupActivityBroadcastReceiver(this);
 		IntentFilter filter = new IntentFilter();
+		filter.addAction(YawAdbConstants.AdbModeChangedAction);
 		filter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED); 
 		filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 		registerReceiver(bcastReceiver, filter);
@@ -64,11 +66,6 @@ public class PopupActivity extends Activity {
 		findViewById(R.id.actInfo).setOnClickListener(clickListener);
 	}
 
-	private void evaluateIfaceName() {
-		YawAdbOptions options = new YawAdbOptions(this);
-		ifaceName = new String(options.ifaceName.getString());
-	}
-	
 	protected void refreshStatus() {
 		Intent bcastedIntent = new Intent(YawAdbConstants.RefreshStatusAction);
 		sendBroadcast(bcastedIntent);
@@ -76,10 +73,8 @@ public class PopupActivity extends Activity {
 	
 	protected void refreshText() {	
 		Resources rsrc = getResources();
-		
-		StatusAnalyzer analyzer = new StatusAnalyzer(this, ifaceName);
-		StatusAnalyzer.Status stat = analyzer.analyze();
-				
+		Status stat = analyzer.analyze();
+						
 		TextView tv = (TextView) findViewById(R.id.status);
 		boolean toggleModeEnabled = true; 
 		int colorResId = R.color.itemDisabledBkgr;
@@ -106,7 +101,6 @@ public class PopupActivity extends Activity {
 				break;
 		}
 		
-		analyzer = null;
 		tv.setOnClickListener(clickListener);
 		tv.setBackgroundColor(rsrc.getColor(colorResId));
 		
@@ -114,7 +108,7 @@ public class PopupActivity extends Activity {
 		if (toggleModeEnabled) {
 			tv.setVisibility(View.VISIBLE);
 			boolean tag;
-			if (stat == StatusAnalyzer.Status.DOWN) {
+			if (stat == Status.DOWN) {
 				tv.setText(R.string.actEnable);
 				colorResId = R.color.itemEnabledBkgr;
 				tag = true;
@@ -129,7 +123,7 @@ public class PopupActivity extends Activity {
 			tv.setBackgroundColor(rsrc.getColor(colorResId));
 		} else
 			tv.setVisibility(View.GONE);
-		
+
 	}
 
 
@@ -145,7 +139,7 @@ public class PopupActivity extends Activity {
 					break;
 					
 				case R.id.toggleMode:
-					changeAdbConnection(((Boolean)view.getTag()).booleanValue());
+					changeAdbConnection(((Boolean)view.getTag()).booleanValue(), true);
 					break;
 					
 				case R.id.actConfig:
@@ -194,25 +188,26 @@ public class PopupActivity extends Activity {
 		if (requestCode == ConfigActivityRequestCode) {
 			sendBroadcast(new Intent(YawAdbConstants.OptionsChangedAction));
 			if (resultCode == ConfigActivity.NewConnectionSettings) {
-				StatusAnalyzer analyzer = new StatusAnalyzer(this, ifaceName);
-				evaluateIfaceName();
 				refreshText();
-				if (analyzer.analyze() == StatusAnalyzer.Status.UP)
-					changeAdbConnection(true);
+				if (analyzer.analyze() == Status.UP)
+					changeAdbConnection(true, false);
 			}
 				
 		}
 
 	}
 
-	protected synchronized void changeAdbConnection(boolean enable) {
+	protected synchronized void changeAdbConnection(boolean enable, boolean explicit) {
 		if (adbThread == null || !adbThread.isAlive()) {
-			adbThread = new AdbConnectionChangeThread(this, enable, asWidget);
+			adbThread = new AdbModeChanger(this, enable, explicit);
 			adbThread.start();
 		}
 	}		 
 
 	private static class PopupActivityBroadcastReceiver extends BroadcastReceiver {
+		private int AfterUpdateTimeoutUp=3000;
+		private int AfterUpdateTimeoutDown=1000;
+		
 		PopupActivity activity;
 		public PopupActivityBroadcastReceiver(PopupActivity activity) {
 			this.activity = activity;
@@ -221,93 +216,13 @@ public class PopupActivity extends Activity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			activity.refreshText();
-		}
-	}
-	
-	
-	protected static class ThreadHandler extends android.os.Handler {
-		public static final int WHAT_REFRESH_TEXT = 1;
-		public static final int WHAT_SHOW_TOOLTIP = 2;
-		
-		private PopupActivity activity;
-		public ThreadHandler(PopupActivity activity) {
-			this.activity = activity;
-		}
-		@Override
-		public void handleMessage(Message msg) {
-			switch(msg.what) {
-				case WHAT_REFRESH_TEXT:
-					activity.refreshText();
-					break;
-					
-				case WHAT_SHOW_TOOLTIP:
-					Utils.showTooltip(activity, msg.arg1, msg.arg2);
-			}
-		}
-		
-	}
-
-
-	private static class AdbConnectionChangeThread extends Thread {
-		private static final int AfterUpdateTimeout = 3000;
-		private int port;
-		private PopupActivity activity;
-		private String shellPath;
-		private boolean asWidget;
-		private boolean forceKill;
-		private ThreadHandler handler;
-
-		public AdbConnectionChangeThread (PopupActivity activity, boolean enable, boolean asWidget) {
-			this.activity = activity;
-			this.asWidget = asWidget;
-			handler = new ThreadHandler(activity);
-			processOptions(enable);
-		}
-
-		private void processOptions(boolean enable) {
-			YawAdbOptions options = new YawAdbOptions(activity);
-			port = enable ? options.portNumber.getIntValue() : StatusAnalyzer.DumbADBPort;
-			forceKill = (options.adbdRestartMethod.getIndex() != 0);
-			shellPath = options.shellPath.getString();
-		}
-		
-		
-		public void run() {
-			String[] cmd = new String[3];
-			cmd[0] = "setprop service.adb.tcp.port " + port;
-			int pid = 0;
-			if (forceKill) pid = Utils.getAdbdPid();
-			cmd[1] = (pid <= 0) ? "stop adbd" : ("kill -9 " + pid);
-			cmd[2] = "start adbd";
-			
-			try {
-				if (!Utils.runBatchSequence(shellPath, cmd)) 
-					Message.obtain(handler, ThreadHandler.WHAT_SHOW_TOOLTIP, 
-							R.string.msgCouldntExecute, Toast.LENGTH_LONG).sendToTarget();
-				
-				// Refresh anyway (just to be up to date)	
-
-				// Wait 3sec for the daemon to come up
-				if (port != StatusAnalyzer.DumbADBPort) {
-					int countDown = 15;
-					while(--countDown>=0 && Utils.getAdbdPid()<0) 
-						Thread.sleep(200);
-				}
-				
-				
-				Message.obtain(handler, ThreadHandler.WHAT_REFRESH_TEXT).sendToTarget();
-					
-				if (asWidget) {
-					activity.refreshStatus();
-					if (!activity.isFinishing()) {
-						if (port != StatusAnalyzer.DumbADBPort)
-							Thread.sleep(AfterUpdateTimeout);
-						activity.finish();
-					}
-					
-				}
-			} catch(InterruptedException ex) {}
-			
+			if (activity.asWidget && !activity.isFinishing() && 
+				intent.getAction().equals(YawAdbConstants.AdbModeChangedAction) &&
+				intent.getBooleanExtra(YawAdbConstants.ExplicitExtra, false)) { 
+				(new Handler()).postDelayed(new Runnable() {
+					public void run() {activity.finish();}},
+					(activity.analyzer.getStatus() == Status.UP) ? AfterUpdateTimeoutUp : AfterUpdateTimeoutDown);
+			}	
 		}
 	}
 

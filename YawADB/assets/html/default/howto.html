@@ -48,7 +48,8 @@ experimenting and know what they are doing.</p>
 
 <h2>Customised features</h2>
 <p><b><u>Port number</u></b>. Specifies port to use for connection. Use default value <tt>5555</tt>,
-unless it clashes with another application.</p>
+unless it clashes with another application. If another port number is needed,
+it is recommended to avoid ports 5554, 5556, 5558 .. used by ADB for console connections.</p>
 
 <p><b><u>Auto-refresh</u></b> (widget mode only). If auto-refresh is enabled, the widget re-checks
 the status of ADB daemon in the specified interval of time. If disabled (default value),
@@ -57,6 +58,16 @@ or airplane mode), when YawADB icon is tapped, or after enable/disable wireless 
 Auto-refresh is recommended when there are several applications
 changing wireless ADB status, or ADB daemon is unstable on your device
 (a rather unlikely possibility).</p>
+
+<p><b><u>Auto-USB</u></b> (widget mode only). If the option is enabled,
+every time the wireless connection is lost, the ABD daemon is restarted in USB mode,
+which makes the device accessible through USB connection.</p>
+
+<p>The default mode is <i>disabled</i>, in which case the daemon is not restarted autmatically.
+To enable USB connection you must select <i>'Disable wireless ADB'</i> from the YawADB menu.
+If you don't do that, and the daemon continues running in wireless (TCP/IP) mode,
+the wireless ADB connection automatically becomes available when network re-appears,
+you only need to re-enter <tt>adb connect</tt> for accessing the device.</p>         
 
 <p><b><u>SU path</u></b>. The path of <tt>su</tt> program (e.g. <tt>/system/bin/su</tt>). If the full path
 is not specified, the directory should be listed in PATH environment variable.</p>
@@ -67,18 +78,6 @@ For example, you may create a <i>suid-rooted</i> copy of <tt>/system/bin/sh</tt>
 <tt>SU Path</tt> for YawADB. <i>Be aware that this makes your device unsafe
 by allowing to execute rooted commands without any notification!</i>
 For that reason using a rooted device is certainly a preferred option.</p>
-
-<p><b><u>Network</u></b>. Name of interface, used for wireless ADB. The standard name is <tt>wlan0</tt>,
-however some devices use <tt>tiwlan0</tt> or even <tt>eth0</tt>. It the name is specified as <tt>wifi</tt> 
-(default value), YawADB will get IP address from Android WiFi service (WifiManager class). 
-The parameter opens a door for trying mobile connections
-(such as <tt>rmnet</tt>), and if you succeed, take our congratulations.</p>
-
-<p>Due to a rather awkward Android design the default option works only with IPv4 network.
-If the interface name is specified explicitly, the application will use IPv4 network,
-or IPv6 network, if IPv4 network is unavailable. If <tt>:6</tt> is appended to the network name
-(e.g <tt>wlan0:6</tt>), the IPv6 network has preference over IPv4. (Yes,
-ADB currently does not support IPv6, but it hopefully will in the future.)     
      
 <p><b><u>ADBD restart</u></b>. In order to accept the new mode, ADB daemon should be restarted. In <i>normal</i>
 mode (default) the daemon is stopped using <tt>stop adbd</tt> command, which may fail, if the daemon is busy or stalled.
@@ -86,14 +85,21 @@ In <i>forced</i> mode the daemon is terminated by sending SIGKILL to its PID. It
 stop, but precludes it from performing clean-up. Use it with care.</p>      
     
 <h2>Troubleshooting</h2>
+
+<p><b><u>After installation YawADB icon appears in the application list, but not in the list of widgets.</u></b>.</p>
+
+<p>Restart the device. The icon appears in both lists, and you will not have the problem again.</p>   
+
 <p><b><u>YawADB icon is green, but ADB client does not see the device</u></b>.</p>
-<p>Assuming the client device is connected to the network and not behind a firewall, re-entering&nbsp; <tt>adb connect</tt>&nbsp; will do the trick.</p>
+<p>Assuming the computer is connected to the network and not behind a firewall, re-entering&nbsp; <tt>adb connect</tt>&nbsp; will do the trick.</p>
 
 
-<p><b><u>Wireless ADB is turned off, but ADB client does not recognise the device, connected to USB</u></b>.</p>
+<p><b><u>YawADB icon is red, but ADB does not recognise the device, connected to USB</u></b>.</p>
 
-<p>Disconnect the device and re-connect it. Alternatively you can restart the ADB
-server on the client side using</p>
+<p>Tap the YawADB icon. If <i>Disable wireless ADB</i> option is listed, select it, and it should disappear.</p>
+
+<p>If the problem persists when <i>Disable wireless ADB</i> is not listed, 
+disconnect the device and re-connect it. Alternatively you can restart the ADB server using</p>
 <pre>
   adb kill-server
   adb start-server

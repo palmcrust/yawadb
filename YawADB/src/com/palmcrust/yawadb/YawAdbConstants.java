@@ -23,12 +23,12 @@ package com.palmcrust.yawadb;
 public class YawAdbConstants {
 	public static final String AsWidgetExtra = "com.palmcrust.yawadb.extra.FromWidget";
 	public static final String ComponentNameExtra = "com.palmcrust.yawadb.extra.ComponentName";
-//	public static final String WidgetIdsExtra = "com.palmcrust.yawadb.extra.WiewIdsExtra";
-//	public static final String ForceRefreshExtra = "com.palmcrust.yawadb.action.FORCEREFRESH";
-	public static final String OnClickIntentExtra = "com.palmcrust.yawadb.action.CLICKINTENT";
+	public static final String OnClickIntentExtra = "com.palmcrust.yawadb.action.OnClickIntent";
+	public static final String ExplicitExtra = "com.palmcrust.yawadb.action.Explicit";
 
 	public static final String OptionsChangedAction = "com.palmcrust.yawadb.action.NEWOPTIONS";
 	public static final String RefreshStatusAction = "com.palmcrust.yawadb.action.REFRESH";
 	public static final String ProviderRefreshAction = "com.palmcrust.yawadb.action.PROVIDERREFRESH";
+	public static final String AdbModeChangedAction = "com.palmcrust.yawadb.action.ADBMODECHANGED";
 	public static final String PopupAction = "com.palmcrust.yawadb.action.POPUP";
 }

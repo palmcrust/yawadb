@@ -181,34 +181,13 @@ public class YawAdbOptions {
 		}
 	}
 
-	public static class InterfaceNameOption extends TextOption {
-		
-		protected InterfaceNameOption(String key, int boxId,
-				int nameResId, int errMsgId, String defaultValue) {
-			super(key, boxId, nameResId, errMsgId, defaultValue);
-		}
-		
-		@Override
-		public boolean validateValue(Object value) {
-			String name = (String) value;
-			// Since a particular network interface is not always available,
-			// we allow current value, even though it might be invalid at the moment.
-			// We also allow the default value which is not a real interface name.
-			if (name.equals((String)defaultValue) ||
-				name.equals((String)curValue)) return true;
-			
-			try {
-				return (StatusAnalyzer.checkNetworkName(name));
-			} catch (Exception ex) {
-				return false;
-			}
-		}
-	}
-	
 	//=======================================================================================
-	private static final int[] refrStringIds =
+	private static final int[] autoRefrStringIds =
 		{R.string.refrNever, R.string.refr3sec, R.string.refr20sec,
 		 R.string.refr1min, R.string.refr10min, R.string.refr30min};    
+
+	private static final int[] autoOffStringIds =
+		{R.string.disabled, R.string.enabled};
 
 	private static final int[] refrIntervals = 
 		{0, 3000, 20000, 60000, 600000, 1800000};	
@@ -222,19 +201,18 @@ public class YawAdbOptions {
 					R.string.optPortNumber, R.string.msgPortNumberError, StatusAnalyzer.DefaultADBPort, 1024, 65535); 
 
 	public AlternativesOption autoRefresh =
-			new AlternativesOption("AR", R.id.optAutoRefresh, R.string.optAutoRefresh, 0, 0, refrStringIds);
+			new AlternativesOption("AR", R.id.optAutoRefresh, R.string.optAutoRefresh, 0, 0, autoRefrStringIds);
+
+	public AlternativesOption autoUsb =
+			new AlternativesOption("AD", R.id.optAutoUsb, R.string.optAutoUsb, 0, 0, autoOffStringIds);
 	
 	public PathOption shellPath = 
 			new PathOption("SP", R.id.optShellPath, R.string.optShellPath, R.string.msgInvalidPath, "su");
 
-	public InterfaceNameOption ifaceName = 
-			new InterfaceNameOption("IF", R.id.optIfaceName, R.string.optIfaceName, 
-				R.string.msgInvalidIfaceName, StatusAnalyzer.NetworkNameDefault);
-
 	public AlternativesOption adbdRestartMethod = 
 			new AlternativesOption("ARM", R.id.optAdbRestart,  R.string.optAdbdRestart, 0, 0, adbRestartStringIds);   
 	
-	public Option[] allOptions = {portNumber, autoRefresh, shellPath, ifaceName, adbdRestartMethod};
+	public Option[] allOptions = {portNumber, autoRefresh, autoUsb, shellPath,  adbdRestartMethod};
 	
 	//-----------------------------------------------------------------------------------------------------
 	
@@ -273,6 +251,10 @@ public class YawAdbOptions {
 
 	public int getRefreshInterval() {
 		return refrIntervals[autoRefresh.getIndex()];
+	}
+
+	public boolean getAutoUsbValue() {
+		return (autoUsb.getIndex() != 0);
 	}
 	
 }

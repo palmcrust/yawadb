@@ -29,6 +29,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.widget.RemoteViews;
@@ -41,8 +42,9 @@ public class YawAdbService extends Service {
 	private AppWidgetManager appWidgetManager;
 	private WidgetServiceBroadcastReceiver bcastReceiver;
 	private int oldImageResId;
-	private PendingIntent onClickIntent; 
-	private String ifaceName;
+	private boolean autoUsb;
+	private PendingIntent onClickIntent;
+	private AdbModeChanger modeChanger;
 
 	@Override
 	public void onStart(Intent intent, int startId) {
@@ -63,6 +65,7 @@ public class YawAdbService extends Service {
 		providerCompName = intent.getParcelableExtra(YawAdbConstants.ComponentNameExtra);
 		onClickIntent = intent.getParcelableExtra(YawAdbConstants.OnClickIntentExtra);
 		oldImageResId = 0;
+		modeChanger = null;
 		
 		processOptions();
 		initRefreshStatus(true);
@@ -72,6 +75,7 @@ public class YawAdbService extends Service {
 		filter.addAction(YawAdbConstants.ProviderRefreshAction);
 		filter.addAction(YawAdbConstants.RefreshStatusAction);
 		filter.addAction(YawAdbConstants.OptionsChangedAction);
+		filter.addAction(YawAdbConstants.AdbModeChangedAction);
 		filter.addAction(YawAdbConstants.PopupAction);
 		filter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED); 
 		filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
@@ -87,7 +91,7 @@ public class YawAdbService extends Service {
 		}
 		
 		YawAdbOptions options = new YawAdbOptions(this);
-		ifaceName = new String(options.ifaceName.getString());
+		autoUsb = options.getAutoUsbValue();
 		int refrInterval = options.getRefreshInterval();
 		
 		if (refrInterval > 0) {
@@ -98,9 +102,15 @@ public class YawAdbService extends Service {
 
 	@Override
 	public void onDestroy() {
+		
 		if (bcastReceiver != null) {
 			getApplicationContext().unregisterReceiver(bcastReceiver);
 			bcastReceiver = null;
+		}
+
+		if (modeChanger != null) {
+			modeChanger.interrupt();
+			modeChanger = null;
 		}
 		
 		if (servThread != null) {
@@ -123,18 +133,33 @@ public class YawAdbService extends Service {
 	}
 	
 	protected synchronized void refreshStatus(boolean force) {
-		StatusAnalyzer analyzer = new StatusAnalyzer(this, ifaceName); 
-		int newImageResId = 
-			(analyzer.analyze() == StatusAnalyzer.Status.UP) ? 
+		StatusAnalyzer analyzer = new StatusAnalyzer(this);
+		StatusAnalyzer.Status stat = analyzer.analyze();
+		int newImageResId = (stat == StatusAnalyzer.Status.UP) ? 
 				R.drawable.wireless_up : R.drawable.wireless_down;
-		analyzer = null;
-		if (force || newImageResId != oldImageResId) {
+
+		if (force || (newImageResId != oldImageResId)) {
 			views.setImageViewResource(R.id.modeImg, newImageResId);
 			appWidgetManager.updateAppWidget(providerCompName, views);
 			oldImageResId = newImageResId; 
 		}
+
+		if (autoUsb && (stat == StatusAnalyzer.Status.NO_NETWORK) &&
+				analyzer.isWirelessActive())  
+			(new Handler()).postDelayed(new Runnable() {
+					public void run() {
+						startAdbModeChanger();
+					}}, 200);
+		
 	}
 
+	protected void startAdbModeChanger() {
+		if (modeChanger == null || !modeChanger.isAlive()) {
+			modeChanger = new AdbModeChanger(YawAdbService.this, false, false);
+			modeChanger.start();
+		}
+	}
+	
 	protected synchronized void refreshOnClickListener() {
 		views.setOnClickPendingIntent(R.id.modeImg, onClickIntent);
 		appWidgetManager.updateAppWidget(providerCompName, views);
@@ -148,6 +173,7 @@ public class YawAdbService extends Service {
 		startActivity(intent);
 	}
 
+	
 	//=========================================================================
 	private static class WidgetServiceBroadcastReceiver extends BroadcastReceiver {
 		private YawAdbService service; 

@@ -16,8 +16,8 @@
 	    	   
     <include android:id="@+id/optPortNumber" layout="@layout/edit_box"/> 
     <include android:id="@+id/optAutoRefresh" layout="@layout/choice_box"/> 
-	<include android:id="@+id/optShellPath" layout="@layout/edit_box"/>    
-	<include android:id="@+id/optIfaceName" layout="@layout/edit_box"/>    
+	<include android:id="@+id/optAutoUsb" layout="@layout/choice_box"/>    
+   	<include android:id="@+id/optShellPath" layout="@layout/edit_box"/>    
 	<include android:id="@+id/optAdbRestart" layout="@layout/choice_box"/>    
 	
 	<TextView

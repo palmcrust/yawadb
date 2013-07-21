@@ -18,12 +18,6 @@
 
 package com.palmcrust.yawadb;
 
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Enumeration;
-
 import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -37,13 +31,11 @@ public class StatusAnalyzer {
 	
 	private Context context; 
 	private Status curStatus = Status.UNDEFINED;
-	private String ifaceName;
 	private String ipAddress;
 	private int portNumber;
 	
-	public StatusAnalyzer(Context context, String interfaceName) {
+	public StatusAnalyzer(Context context) {
 		this.context = context;
-		this.ifaceName = interfaceName.equals(NetworkNameDefault) ? null : interfaceName;
 	}
 	
 	public Status analyze() {
@@ -55,8 +47,7 @@ public class StatusAnalyzer {
 				portNumber = Integer.parseInt(portNumberStr);
 			} catch(NumberFormatException ex) {	}
 
-		ipAddress = (ifaceName==null) ? 
-				ipAddressFromWifiManager(context): ipAddressForInterface(ifaceName);
+		ipAddress = ipAddressFromWifiManager(context);
 		if (ipAddress == null) 	return (curStatus = Status.NO_NETWORK); 
 
 		// Is adbd running?
@@ -66,6 +57,10 @@ public class StatusAnalyzer {
 		return curStatus;
 	}
 
+	public Status getStatus() {
+		return curStatus; 
+	}
+	
 	public boolean isWirelessActive() {
 		return (portNumber != DumbADBPort);
 	}
@@ -86,10 +81,6 @@ public class StatusAnalyzer {
 	}
 		
 
-	public static boolean checkNetworkName(String ifaceName) {
-		return  (ipAddressForInterface(ifaceName) != null);
-	}
-	
 	private static String ipAddressFromWifiManager(Context context) {
 		WifiManager wfm = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 		if (wfm == null) return null;
@@ -119,45 +110,6 @@ public class StatusAnalyzer {
 	}
 
 
-	private static String ipAddressForInterface(String ifaceNameString) {
-		String ipAddress =null;
-		boolean preferIPv6 = false;
-		int i = ifaceNameString.indexOf(':');
-		String ifaceName = ifaceNameString;
-		if (i>0) {
-			ifaceName = ifaceNameString.substring(0, i);
-			String ipPref = ifaceNameString.substring(i+1);
-			if (ipPref.equals("6")) preferIPv6 = true;
-			else
-			if (!ipPref.equals("4")) return null;
-		}
-			
-		try {
-			NetworkInterface iface = NetworkInterface.getByName(ifaceName);
-			if (iface == null) return null;
-			InetAddress inetAddr = inetAddrForInterface(iface, preferIPv6);
-			ipAddress = inetAddr.getHostAddress();
-			int ind = ipAddress.indexOf('%');
-			if (ind >= 0) ipAddress = ipAddress.substring(0, ind);
-		} catch (SocketException ex) {
-			ex.printStackTrace();
-		}
-		return ipAddress;
-	}
-
-	private static InetAddress inetAddrForInterface(NetworkInterface iface, boolean preferIPv6) {
-		if (iface==null) return null;
-		Enumeration<InetAddress> addresses = iface.getInetAddresses();
-		if (addresses==null) return null;
-		InetAddress matchingAddr = null;
-		while (addresses.hasMoreElements()) {
-			InetAddress curAddr = addresses.nextElement();
-			if ((matchingAddr == null) || (curAddr instanceof Inet4Address)!=preferIPv6)
-				matchingAddr = curAddr;
-		}
-		return matchingAddr;
-	}
-	
 	
 }
 
