@@ -106,7 +106,6 @@ public class StatusAnalyzer {
 			Class<?> formatterClass =  Class.forName("android.text.format.Formatter");
 			return  (String) formatterClass.getMethod("formatIpAddress", int.class).invoke(null, Integer.valueOf(ipAddress));
 		} catch (Exception ex) {
-			// Oddly enough, the actually returned address is little-endian!
 			StringBuilder sb = new StringBuilder();
 			int count = 4;
 			int tmp = ipAddress;
@@ -161,3 +160,4 @@ public class StatusAnalyzer {
 	
 	
 }
+
