@@ -32,6 +32,7 @@ public class AdbModeChanger extends Thread {
 		
 		private Context context;
 		public ThreadHandler(Context context) {
+			super();
 			this.context = context;
 		}
 		@Override
@@ -52,6 +53,7 @@ public class AdbModeChanger extends Thread {
 
 	// explicit = true, if the thread is called as a result of enable/disable command,
 	public AdbModeChanger (Context context, boolean enable, boolean explicit) {
+		super();
 		this.context = context;
 		this.explicit = explicit;
 		handler = new ThreadHandler(context);

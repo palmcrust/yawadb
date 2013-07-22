@@ -37,13 +37,14 @@ import android.widget.RemoteViews;
 
 @TargetApi(Build.VERSION_CODES.CUPCAKE)
 public class YawAdbService extends Service {
-	protected WidgetServiceThread servThread = null;
+	protected AutoRefreshThread refrThread;
 	private RemoteViews views;
 	private ComponentName providerCompName; 
 	private AppWidgetManager appWidgetManager;
 	private WidgetServiceBroadcastReceiver bcastReceiver;
 	private int oldImageResId;
 	private boolean autoUsb;
+	protected int refrInterval;
 	private PendingIntent onClickIntent;
 	private AdbModeChanger modeChanger;
 	private static final String LogTag = "YawADB";
@@ -79,6 +80,7 @@ public class YawAdbService extends Service {
 		onClickIntent = intent.getParcelableExtra(YawAdbConstants.OnClickIntentExtra);
 		oldImageResId = 0;
 		modeChanger = null;
+		refrThread = null;
 		
 		processOptions();
 		initRefreshStatus(true);
@@ -91,6 +93,8 @@ public class YawAdbService extends Service {
 		filter.addAction(YawAdbConstants.AdbModeChangedAction);
 		filter.addAction(YawAdbConstants.PopupAction);
 		filter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED); 
+		filter.addAction(Intent.ACTION_SCREEN_ON); 
+		filter.addAction(Intent.ACTION_SCREEN_OFF); 
 		filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 		getApplicationContext().registerReceiver(bcastReceiver, filter);
 
@@ -98,22 +102,16 @@ public class YawAdbService extends Service {
 			
 	protected void processOptions() {
 		// We ALWAYS restart the thread in order to reset ticks!
-		if (servThread != null) {
-			servThread.terminate();
-			servThread = null;
-		}
+		terminateAutoRefresh();
 		
 		YawAdbOptions options = new YawAdbOptions(this);
 		autoUsb = options.getAutoUsbValue();
 		if (autoUsb) initRefreshStatus(false); // To disable WADB is necessary
 		
-		int refrInterval = options.getRefreshInterval();
-		
-		if (refrInterval > 0) {
-			servThread = new WidgetServiceThread(this, refrInterval); 
-			servThread.start();
-		}
+		refrInterval = options.getRefreshInterval();
+		startAutoRefreshIfRequested();
 	}
+	
 
 	@Override
 	public void onDestroy() {
@@ -128,9 +126,9 @@ public class YawAdbService extends Service {
 			modeChanger = null;
 		}
 		
-		if (servThread != null) {
-			servThread.terminate();
-			servThread = null;
+		if (refrThread != null) {
+			refrThread.terminate();
+			refrThread = null;
 		}
 		super.onDestroy();
 	}
@@ -140,9 +138,25 @@ public class YawAdbService extends Service {
 		return null;
 	}
 
+	protected void startAutoRefreshIfRequested() {
+		if (refrInterval > 0 && (refrThread==null || !refrThread.isAlive())) {
+			refrThread = new AutoRefreshThread(this, refrInterval);
+			refrThread.start();
+		}
+	}
+
+	protected void terminateAutoRefresh() {
+		if (refrThread != null) {
+			refrThread.terminate();
+			// Safer not to use Thread.join here 
+			refrThread =null;
+		}
+	}
+	
+	
 	protected synchronized void initRefreshStatus(boolean force) {
-		if (servThread != null)
-			servThread.updateStatus(force);
+		if (refrThread != null)
+			refrThread.updateStatus(force);
 		else
 			refreshStatus(force);
 	}
@@ -175,7 +189,7 @@ public class YawAdbService extends Service {
 		}
 	}
 	
-	protected synchronized void refreshOnClickListener() {
+	protected synchronized void setIntentOnClickListener() {
 		views.setOnClickPendingIntent(R.id.modeImg, onClickIntent);
 		appWidgetManager.updateAppWidget(providerCompName, views);
 	}
@@ -199,24 +213,32 @@ public class YawAdbService extends Service {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
-			if (action.equals(YawAdbConstants.ProviderRefreshAction)) {
-				service.refreshOnClickListener();
-				service.initRefreshStatus(true);
-			} else	
 			if (action.equals(YawAdbConstants.OptionsChangedAction)) 
 				service.processOptions();
+			else
+			if (action.equals(Intent.ACTION_SCREEN_OFF)) 
+				service.terminateAutoRefresh();
 			else {
+				//  YawAdbConstants.PopupAction
+				//  YawAdbConstants.RefreshStatusAction
+				//  YawAdbConstants.ProviderRefreshAction
+				//	Intent.ACTION_AIRPLANE_MODE_CHANGED 
+				//	Intent.ACTION_SCREEN_ON 
+				//  ConnectivityManager.CONNECTIVITY_ACTION  
 				service.initRefreshStatus(false);
 
 				if (action.equals(YawAdbConstants.PopupAction)) 
 					service.startPopupActivity();
 				else 
-				if (!action.equals(YawAdbConstants.RefreshStatusAction))  
+				if (!action.equals(YawAdbConstants.RefreshStatusAction)) {
+					//  YawAdbConstants.ProviderRefreshAction
 					//	Intent.ACTION_AIRPLANE_MODE_CHANGED 
+					//	Intent.ACTION_SCREEN_ON 
 					//  ConnectivityManager.CONNECTIVITY_ACTION  
-					service.refreshOnClickListener();
+					service.setIntentOnClickListener();
+					service.startAutoRefreshIfRequested();
+				}
 			}
-				
 		}
 	}
 
@@ -238,14 +260,14 @@ public class YawAdbService extends Service {
 			
 	}
 	//=========================================================================
-	private static class WidgetServiceThread extends Thread {
+	private static class AutoRefreshThread extends Thread {
 		public static enum InterruptReason {UNDEFINED, UPDATE_STATUS, TERMINATE}
 		public InterruptReason reason = InterruptReason.UNDEFINED;
 		private WidgetServiceMessageHandler handler;
 		private boolean force=false; 
 		private int sleepTimeout; 
 		
-		protected WidgetServiceThread(YawAdbService service, int sleepTimeout) {
+		protected AutoRefreshThread(YawAdbService service, int sleepTimeout) {
 			super();
 			handler = new WidgetServiceMessageHandler(service);
 			this.sleepTimeout = sleepTimeout;
