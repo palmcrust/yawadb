@@ -63,8 +63,8 @@ changing wireless ADB status, or ADB daemon is unstable on your device
 every time the wireless connection is lost, the ABD daemon is restarted in USB mode,
 which makes the device accessible through USB connection.</p>
 
-<p>The default mode is <i>disabled</i>, in which case the daemon is not restarted autmatically.
-To enable USB connection you must select <i>'Disable wireless ADB'</i> from the YawADB menu.
+<p>The default mode is <i>disabled</i>, in which case the daemon is not restarted automatically.
+To enable USB con&shy;nec&shy;tion you must select <i>'Disable wireless ADB'</i> from the YawADB menu.
 If you don't do that, and the daemon continues running in wireless (TCP/IP) mode,
 the wireless ADB connection automatically becomes available when network re-appears,
 you only need to re-enter <tt>adb connect</tt> for accessing the device.</p>         
@@ -94,9 +94,11 @@ stop, but precludes it from performing clean-up. Use it with care.</p>
 <p>Assuming the computer is connected to the network and not behind a firewall, re-entering&nbsp; <tt>adb connect</tt>&nbsp; will do the trick.</p>
 
 
-<p><b><u>YawADB icon is red, but ADB does not recognise the device, connected to USB</u></b>.</p>
+<p><b><u>YawADB icon is red, but ADB does not recognise the device, con&shy;nec&shy;ted to USB</u></b>.</p>
 
-<p>Tap the YawADB icon. If <i>Disable wireless ADB</i> option is listed, select it, and it should disappear.</p>
+<p>If the wireless network is unavailable and <i>Auto-USB</i> is disabled, you may need
+to manually restart the daemon. To do that tap the YawADB icon. If <i>Disable wireless ADB</i>
+option is listed, select it, and it should disappear.</p>
 
 <p>If the problem persists when <i>Disable wireless ADB</i> is not listed, 
 disconnect the device and re-connect it. Alternatively you can restart the ADB server using</p>
