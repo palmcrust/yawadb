@@ -32,6 +32,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.util.Log;
 import android.widget.RemoteViews;
 
 @TargetApi(Build.VERSION_CODES.CUPCAKE)
@@ -45,17 +46,29 @@ public class YawAdbService extends Service {
 	private boolean autoUsb;
 	private PendingIntent onClickIntent;
 	private AdbModeChanger modeChanger;
+	private static final String LogTag = "YawADB";
+	private static final String MsgNullIntent=" Null intent at \'%s\'! Ignoring the call";
 
 	@Override
 	public void onStart(Intent intent, int startId) {
-	    handleStartCommand(intent);
+		if (intent==null)
+			Log.i(LogTag, String.format(MsgNullIntent, "onStart"));
+		else
+			handleStartCommand(intent);
 	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-	    handleStartCommand(intent);
-	    // We want this service to continue running until it is explicitly
-	    // stopped, so return sticky.
+		// Can you imagine calling onStartCommand with null intent?
+		// This is one of numerous unthinkable tricks, our beloved
+		// Ainol Nova II Advanced (ICS 4.0.3) is capable of, which
+		// makes it so special and so great ... for testing. To you,
+		// my darling, I dedicate this silly patch, as about the
+		// others, excusez-moi pour ce marasme.
+		if (intent==null)
+			Log.i(LogTag, String.format(MsgNullIntent, "onStartCommand"));
+		else
+			handleStartCommand(intent);
 	    return START_STICKY; 
 	}
 	

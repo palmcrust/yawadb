@@ -46,7 +46,7 @@ experimenting and know what they are doing.</p>
  <p>Email address for comments and suggestions (but definitely not for spam!):
  <a href="mailto:palmcrust@gmail.com">palmcrust@gmail.com</a>.</p>
 
-<h2>Customised features</h2>
+<h2>Configuration Options</h2>
 <p><b><u>Port number</u></b>. Specifies port to use for connection. Use default value <tt>5555</tt>,
 unless it clashes with another application. If another port number is needed,
 it is recommended to avoid ports 5554, 5556, 5558 .. used by ADB for console connections.</p>
@@ -86,9 +86,9 @@ stop, but precludes it from performing clean-up. Use it with care.</p>
     
 <h2>Troubleshooting</h2>
 
-<p><b><u>After installation YawADB icon appears in the application list, but not in the list of widgets.</u></b>.</p>
+<p><b><u>After installation YawADB icon appears among the applications, but not among the widgets.</u></b>.</p>
 
-<p>Restart the device. The icon appears in both lists, and you will not have the problem again.</p>   
+<p>Restart the device. The icon appears in both pages, and you will not have the problem again.</p>   
 
 <p><b><u>YawADB icon is green, but ADB client does not see the device</u></b>.</p>
 <p>Assuming the computer is connected to the network and not behind a firewall, re-entering&nbsp; <tt>adb connect</tt>&nbsp; will do the trick.</p>
@@ -100,7 +100,7 @@ stop, but precludes it from performing clean-up. Use it with care.</p>
 to manually restart the daemon. To do that tap the YawADB icon. If <i>Disable wireless ADB</i>
 option is listed, select it, and it should disappear.</p>
 
-<p>If the problem persists when <i>Disable wireless ADB</i> is not listed, 
+<p>If the problem persists, when wireless ADB mode is disabled, 
 disconnect the device and re-connect it. Alternatively you can restart the ADB server using</p>
 <pre>
   adb kill-server
