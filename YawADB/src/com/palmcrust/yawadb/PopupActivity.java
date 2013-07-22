@@ -39,7 +39,6 @@ public class PopupActivity extends Activity  {
 	private static final int ConfigActivityRequestCode = 666;
 	
 	protected boolean asWidget;
-	protected StatusAnalyzer analyzer;
 
 	private Thread adbThread;
 	private BroadcastReceiver bcastReceiver;
@@ -52,7 +51,6 @@ public class PopupActivity extends Activity  {
 		adbThread = null;
 		asWidget = getIntent().getBooleanExtra(YawAdbConstants.AsWidgetExtra, false);
 
-		analyzer = new StatusAnalyzer(this);
 		refreshText();
 
 		bcastReceiver= new PopupActivityBroadcastReceiver(this);
@@ -71,8 +69,9 @@ public class PopupActivity extends Activity  {
 		sendBroadcast(bcastedIntent);
 	}
 	
-	protected void refreshText() {	
+	protected StatusAnalyzer refreshText() {	
 		Resources rsrc = getResources();
+		StatusAnalyzer analyzer = new StatusAnalyzer(this);
 		Status stat = analyzer.analyze();
 						
 		TextView tv = (TextView) findViewById(R.id.status);
@@ -124,6 +123,7 @@ public class PopupActivity extends Activity  {
 		} else
 			tv.setVisibility(View.GONE);
 
+		return analyzer;
 	}
 
 
@@ -187,10 +187,26 @@ public class PopupActivity extends Activity  {
 		super.onActivityResult(requestCode, resultCode, data);
 		if (requestCode == ConfigActivityRequestCode) {
 			sendBroadcast(new Intent(YawAdbConstants.OptionsChangedAction));
-			if (resultCode == ConfigActivity.NewConnectionSettings) {
-				refreshText();
-				if (analyzer.analyze() == Status.UP)
-					changeAdbConnection(true, false);
+			if (data != null) {
+				boolean newAutoUsb = data.getBooleanExtra(YawAdbConstants.NewAutoUsbExtra, false);
+				boolean newPort= data.getBooleanExtra(YawAdbConstants.NewPortNumberExtra, false);
+			
+				if (newAutoUsb || newPort) {
+					StatusAnalyzer analyzer = refreshText();
+				
+					switch(analyzer.getStatus()) {
+						case NO_NETWORK:
+							if (newAutoUsb && analyzer.isWirelessActive())
+								changeAdbConnection(false, false);
+							break;
+						
+						case UP:	
+							if (newPort)
+								changeAdbConnection(true, false);
+
+						default:	
+					}
+				}
 			}
 				
 		}
@@ -215,13 +231,13 @@ public class PopupActivity extends Activity  {
 		
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			activity.refreshText();
+			StatusAnalyzer analyzer = activity.refreshText();
 			if (activity.asWidget && !activity.isFinishing() && 
 				intent.getAction().equals(YawAdbConstants.AdbModeChangedAction) &&
 				intent.getBooleanExtra(YawAdbConstants.ExplicitExtra, false)) { 
 				(new Handler()).postDelayed(new Runnable() {
 					public void run() {activity.finish();}},
-					(activity.analyzer.getStatus() == Status.UP) ? AfterUpdateTimeoutUp : AfterUpdateTimeoutDown);
+					(analyzer.getStatus() == Status.UP) ? AfterUpdateTimeoutUp : AfterUpdateTimeoutDown);
 			}	
 		}
 	}

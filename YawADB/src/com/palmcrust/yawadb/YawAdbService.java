@@ -61,10 +61,10 @@ public class YawAdbService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		// Can you imagine calling onStartCommand with null intent?
 		// This is one of numerous unthinkable tricks, our beloved
-		// Ainol Nova II Advanced (ICS 4.0.3) is capable of, which
-		// makes it so special and so great ... for testing. To you,
-		// my darling, I dedicate this silly patch, as about the
-		// others, excusez-moi pour ce marasme.
+		// Nova II Advanced (ICS 4.0.3) is capable of, which makes
+		// it so special and so great ... for testing. To you, my
+		// darling, I dedicate this silly patch, to the others:
+		// "Excusez-moi pour ce marasme".
 		if (intent==null)
 			Log.i(LogTag, String.format(MsgNullIntent, "onStartCommand"));
 		else
@@ -105,6 +105,8 @@ public class YawAdbService extends Service {
 		
 		YawAdbOptions options = new YawAdbOptions(this);
 		autoUsb = options.getAutoUsbValue();
+		if (autoUsb) initRefreshStatus(false); // To disable WADB is necessary
+		
 		int refrInterval = options.getRefreshInterval();
 		
 		if (refrInterval > 0) {
@@ -249,7 +251,7 @@ public class YawAdbService extends Service {
 			this.sleepTimeout = sleepTimeout;
 		}
 
-		public void updateStatus(boolean force) {
+		public synchronized void updateStatus(boolean force) {
 			this.force = force;
 			reason = InterruptReason.UPDATE_STATUS;
 			interrupt();	

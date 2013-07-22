@@ -23,8 +23,10 @@ package com.palmcrust.yawadb;
 public class YawAdbConstants {
 	public static final String AsWidgetExtra = "com.palmcrust.yawadb.extra.FromWidget";
 	public static final String ComponentNameExtra = "com.palmcrust.yawadb.extra.ComponentName";
-	public static final String OnClickIntentExtra = "com.palmcrust.yawadb.action.OnClickIntent";
-	public static final String ExplicitExtra = "com.palmcrust.yawadb.action.Explicit";
+	public static final String OnClickIntentExtra = "com.palmcrust.yawadb.extra.OnClickIntent";
+	public static final String ExplicitExtra = "com.palmcrust.yawadb.extra.Explicit";
+	public static final String NewAutoUsbExtra = "com.palmcrust.yawadb.extra.NewAutoUsb";
+	public static final String NewPortNumberExtra = "com.palmcrust.yawadb.extra.NewePortNumber";
 
 	public static final String OptionsChangedAction = "com.palmcrust.yawadb.action.NEWOPTIONS";
 	public static final String RefreshStatusAction = "com.palmcrust.yawadb.action.REFRESH";

@@ -18,6 +18,7 @@
 
 package com.palmcrust.yawadb;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.text.Editable;
@@ -32,11 +33,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class ConfigActivity extends Activity {
-	public static final int NewConnectionSettings=55;
 	protected Resources rsrc;
 	protected YawAdbOptions options;
 	protected boolean asWidget;
 	private int oldPort; 
+	private boolean oldAutoUsb; 
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +45,7 @@ public class ConfigActivity extends Activity {
 		rsrc = getResources();
 		options = new YawAdbOptions(this);
 		oldPort = options.portNumber.getIntValue();
+		oldAutoUsb=options.getAutoUsbValue();
 		asWidget = getIntent().getBooleanExtra(YawAdbConstants.AsWidgetExtra, false);
 		setContentView(R.layout.config);
 		populateFields();
@@ -169,9 +171,15 @@ public class ConfigActivity extends Activity {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
 
 			if (!applyChanges()) return true;
-			
+
+			Intent intent = new Intent();
+			if (asWidget && !oldAutoUsb && options.getAutoUsbValue())
+				intent.putExtra(YawAdbConstants.NewAutoUsbExtra, true);
+				
 			if (options.portNumber.getIntValue() != oldPort)
-				setResult(ConfigActivity.NewConnectionSettings);
+				intent.putExtra(YawAdbConstants.NewPortNumberExtra, true);
+			
+			setResult(Activity.RESULT_OK, intent);
 			
 			options.savePreferences();
 		}
