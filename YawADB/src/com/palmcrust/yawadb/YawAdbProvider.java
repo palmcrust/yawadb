@@ -53,18 +53,16 @@ public class YawAdbProvider extends AppWidgetProvider {
 	public void onEnabled(Context context) {
 		super.onEnabled(context);
 
-		if (serviceIntent == null) {
-			Intent tempServiceIntent = new Intent();
-			tempServiceIntent.setClassName(context, YawAdbService.class.getName());
-			ComponentName myComponentName =  new ComponentName(context, getClass());
-			tempServiceIntent.putExtra(YawAdbConstants.ComponentNameExtra, myComponentName);
-			tempServiceIntent.putExtra(YawAdbConstants.OnClickIntentExtra, 
-				PendingIntent.getBroadcast(context, 0, new Intent(YawAdbConstants.PopupAction), 0));
-			if (context.startService(tempServiceIntent) != null) 
-				serviceIntent = tempServiceIntent;
-			else 
-				Utils.showTooltip(context, R.string.msgSrvcStrtFail, Toast.LENGTH_LONG);
-		}
+		Intent tempServiceIntent = new Intent();
+		tempServiceIntent.setClassName(context, YawAdbService.class.getName());
+		ComponentName myComponentName =  new ComponentName(context, getClass());
+		tempServiceIntent.putExtra(YawAdbConstants.ComponentNameExtra, myComponentName);
+		tempServiceIntent.putExtra(YawAdbConstants.OnClickIntentExtra, 
+			PendingIntent.getBroadcast(context, 0, new Intent(YawAdbConstants.PopupAction), 0));
+		if (context.startService(tempServiceIntent) != null) 
+			serviceIntent = tempServiceIntent;
+		else 
+			Utils.showTooltip(context, R.string.msgSrvcStrtFail, Toast.LENGTH_LONG);
 	}
 
 	
