@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <lint>
+    <issue id="ContentDescription" severity="ignore" />
     <issue id="EnforceUTF8" severity="ignore" />
     <issue id="UselessParent">
         <ignore path="res/layout/info.xml" />

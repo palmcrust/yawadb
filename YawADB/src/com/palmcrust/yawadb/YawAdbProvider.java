@@ -49,28 +49,27 @@ public class YawAdbProvider extends AppWidgetProvider {
 //	}
 
 	
-	@Override
-	public void onEnabled(Context context) {
-		super.onEnabled(context);
-
-		Intent tempServiceIntent = new Intent();
-		tempServiceIntent.setClassName(context, YawAdbService.class.getName());
-		ComponentName myComponentName =  new ComponentName(context, getClass());
-		tempServiceIntent.putExtra(YawAdbConstants.ComponentNameExtra, myComponentName);
-		tempServiceIntent.putExtra(YawAdbConstants.OnClickIntentExtra, 
-			PendingIntent.getBroadcast(context, 0, new Intent(YawAdbConstants.PopupAction), 0));
-		if (context.startService(tempServiceIntent) != null) 
-			serviceIntent = tempServiceIntent;
-		else 
-			Utils.showTooltip(context, R.string.msgSrvcStrtFail, Toast.LENGTH_LONG);
-	}
-
 	
 	@Override
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
 		super.onUpdate(context, appWidgetManager, appWidgetIds);
-		context.sendBroadcast(new Intent(YawAdbConstants.ProviderRefreshAction));
+		
+		if (serviceIntent == null) {
+			serviceIntent = new Intent();
+			serviceIntent.setClassName(context, YawAdbService.class.getName());
+			ComponentName myComponentName =  new ComponentName(context, getClass());
+			serviceIntent.putExtra(YawAdbConstants.ComponentNameExtra, myComponentName);
+			PendingIntent onClickIntent = 
+					PendingIntent.getBroadcast(context, 0, new Intent(YawAdbConstants.PopupAction), 0);
+			serviceIntent.putExtra(YawAdbConstants.OnClickIntentExtra, onClickIntent);
+
+			if (context.startService(serviceIntent) == null)   
+				Utils.showTooltip(context, R.string.msgSrvcStrtFail, Toast.LENGTH_LONG);
+		}
+		else
+			context.sendBroadcast(new Intent(YawAdbConstants.ProviderRefreshAction));
 	}
+
 
 	@Override
 	public void onDisabled(Context context) {
@@ -80,6 +79,7 @@ public class YawAdbProvider extends AppWidgetProvider {
 		}
 		super.onDisabled(context);
 	}
+
 
 
 }

@@ -67,7 +67,7 @@ which makes the device accessible through USB connection.</p>
 To enable USB con&shy;nec&shy;tion you must select <i>'Disable wireless ADB'</i> from the YawADB menu.
 If you don't do that, and the daemon continues running in wireless (TCP/IP) mode,
 the wireless ADB connection automatically becomes available when network re-appears,
-you only need to re-enter <tt>adb connect</tt> for accessing the device.</p>         
+you only need to re-enter <tt>adb connect ...</tt> for accessing the device.</p>         
 
 <p><b><u>SU path</u></b>. The path of <tt>su</tt> program (e.g. <tt>/system/bin/su</tt>). If the full path
 is not specified, the directory should be listed in PATH environment variable.</p>
@@ -91,7 +91,14 @@ stop, but precludes it from performing clean-up. Use it with care.</p>
 <p>Restart the device. The widget will be recognised, and you will not have the problem again.</p>   
 
 <p><b><u>YawADB icon is green, but ADB client does not see the device</u></b>.</p>
-<p>Assuming the computer is connected to the network and not behind a firewall, re-entering&nbsp; <tt>adb connect</tt>&nbsp; will do the trick.</p>
+<p>Assuming the computer is connected to the network and not behind a firewall,
+entering
+<pre>
+  adb disconnect
+  adb connect ...
+</pre>
+
+will do the trick.</p>
 
 
 <p><b><u>YawADB icon is red, but ADB does not recognise the device, con&shy;nec&shy;ted to USB</u></b>.</p>

@@ -54,8 +54,6 @@
 	<string name="infoHowTo">How To</string>
 	<string name="infoLicense">License</string>
 	<string name="infoVersion" formatted="false">Version %s</string>
-	<string name="infoDeveloper" formatted="false">By Palmcrust</string>
-	
 	<string name="infoPathLicense">gpl3.html</string>
 	<string name="infoPathHowTo">default/howto.html</string>
 						

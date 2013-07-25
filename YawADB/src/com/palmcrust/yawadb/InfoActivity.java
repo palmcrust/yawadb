@@ -40,16 +40,18 @@ public class InfoActivity extends Activity {
 		
 		setTitle(rsrc.getString(R.string.infoTitle, rsrc.getString(R.string.app_name)));
 		
-		String version;
-		try {
-			version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-		} catch (NameNotFoundException ex) {
-			version = "???";
-		}
 		
 		setContentView(R.layout.info);
 
-		((TextView)findViewById(R.id.infoVersion)).setText(rsrc.getString(R.string.infoVersion, version));
+		{
+			TextView versionView = (TextView)findViewById(R.id.infoVersion);
+			try {
+				String version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+				versionView.setText(rsrc.getString(R.string.infoVersion, version));
+			} catch (NameNotFoundException ex) {
+				versionView.setVisibility(View.GONE);
+			}
+		}
 		
 		wView = (WebView)findViewById(R.id.content);
 		wView.setOnFocusChangeListener(new View.OnFocusChangeListener() {

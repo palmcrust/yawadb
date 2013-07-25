@@ -213,6 +213,7 @@ public class YawAdbService extends Service {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
+
 			if (action.equals(YawAdbConstants.OptionsChangedAction)) 
 				service.processOptions();
 			else

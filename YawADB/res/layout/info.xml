@@ -69,20 +69,21 @@
         		android:layout_gravity="center_vertical"
         		android:orientation="vertical"
 			>
-				<TextView
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content"
-					android:layout_gravity="center_horizontal"
-					android:text="@string/infoDeveloper"
-					android:textStyle="italic"
-				/>			            
             	<TextView
 			    	android:id="@+id/infoVersion"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-	        		android:layout_marginTop="2dp"
 					android:layout_gravity="center_horizontal"
 					android:text="@string/infoVersion"
+				/>			            
+        	    
+        	    <ImageView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+	        		android:layout_marginTop="2dp"
+					android:layout_gravity="center_horizontal"
+					android:src="@drawable/dev_logo"
+					android:scaleType="fitCenter"
 				/>			            
             </LinearLayout>    
         </FrameLayout>

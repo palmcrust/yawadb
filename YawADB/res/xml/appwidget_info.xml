@@ -5,5 +5,6 @@
     android:widgetCategory="home_screen"
     android:resizeMode="none" 
     android:initialLayout="@layout/widget"
-	android:previewImage="@drawable/ic_launcher" />
+	android:previewImage="@drawable/ic_launcher"
+	android:updatePeriodMillis="1200000" />
    
