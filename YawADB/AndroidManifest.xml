@@ -2,8 +2,8 @@
 <!DOCTYPE manifest>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.palmcrust.yawadb"
-    android:versionCode="10104"
-    android:versionName="1.1.4" >
+    android:versionCode="10105"
+    android:versionName="1.1.5" >
 
     <uses-sdk
         android:minSdkVersion="1"
@@ -19,16 +19,15 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         
-        <receiver android:name="com.palmcrust.yawadb.YawAdbProvider"
-            android:label="@string/app_name"  >
-            <meta-data android:name="android.appwidget.provider"
-                    android:resource="@xml/appwidget_info" />
+        <receiver android:name="com.palmcrust.yawadb.YawAdbProvider" >
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <!-- action android:name="android.appwidget.action.APPWIDGET_DELETED" /-->
                 <!-- category android:name="android.intent.category.DEFAULT" /-->
             </intent-filter>
-        </receiver>
+            <meta-data android:name="android.appwidget.provider"
+                    android:resource="@xml/appwidget_info" />
+		</receiver>
         
         <activity
            	android:name="com.palmcrust.yawadb.PopupActivity"
