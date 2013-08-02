@@ -1,17 +1,12 @@
-<?xml version="1.0" encoding="us-ascii"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+ <ImageButton xmlns:android="http://schemas.android.com/apk/res/android"
+ 	android:id="@+id/modeImg"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent" 
-    android:layout_margin="@dimen/widgetMargin" >
-
-    <ImageButton
-        android:id="@+id/modeImg"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+    android:layout_height="fill_parent"
         
-        android:scaleType="fitXY"
-        android:clickable="true" 
-        android:src="@drawable/wireless_down"
-        android:contentDescription="@string/toggleDescription"
-        android:background="@android:color/transparent"/>
-</FrameLayout>
+    android:scaleType="fitXY"
+    android:clickable="true" 
+    android:src="@drawable/wireless_down"
+    android:contentDescription="@string/toggleDescription"
+    android:background="@android:color/transparent"/>
+
