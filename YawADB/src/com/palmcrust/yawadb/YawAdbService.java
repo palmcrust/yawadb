@@ -81,7 +81,7 @@ public class YawAdbService extends Service {
 		oldImageResId = 0;
 		modeChanger = null;
 		refrThread = null;
-		
+
 		processOptions();
 		initRefreshStatus(true);
 		
@@ -97,6 +97,8 @@ public class YawAdbService extends Service {
 		filter.addAction(Intent.ACTION_SCREEN_OFF); 
 		filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 		getApplicationContext().registerReceiver(bcastReceiver, filter);
+
+		setIntentOnClickListener();
 
 	}
 			

@@ -18,8 +18,18 @@
 
 package com.palmcrust.yawadb;
 
+import java.io.EOFException;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 
 @SuppressWarnings("boxing")
@@ -182,6 +192,7 @@ public class YawAdbOptions {
 	}
 
 	//=======================================================================================
+	
 	private static final int[] autoRefrStringIds =
 		{R.string.refrNever, R.string.refr3sec, R.string.refr20sec,
 		 R.string.refr1min, R.string.refr10min, R.string.refr30min};    
@@ -216,7 +227,10 @@ public class YawAdbOptions {
 	
 	//-----------------------------------------------------------------------------------------------------
 	
-	private static final String SharedPrefsName = "YawAdbOptions"; 
+	private static final String SavedOptionsFileName = "options.dat";
+	private static final byte[] signature = {'Y', 'A'}; 
+	private static final short version = 0; 
+//	private static final String SharedPrefsName = "YawAdbOptions"; 
 	private Context context;
 	
 	public YawAdbOptions(Context context) {
@@ -224,31 +238,91 @@ public class YawAdbOptions {
 		loadPreferences();
 	}
 	
+	
+	
+//	private void loadPreferences() {
+//		SharedPreferences sprefs = context.getSharedPreferences(SharedPrefsName, Context.MODE_PRIVATE);
+//		for (Option opt : allOptions) {
+//			String key = opt.getKey();
+//			Object dfltValue = opt.getDefaultValue();
+//			opt.setValue((opt instanceof TextOption)
+//					? sprefs.getString(key, (String)dfltValue) 
+//					: sprefs.getInt(key, (Integer)dfltValue)); 
+//		}
+//	}
+
 	private void loadPreferences() {
-		SharedPreferences sprefs = context.getSharedPreferences(SharedPrefsName, Context.MODE_PRIVATE);
+		ObjectInputStream ois = null;
+		Map<String, Object> allValues = new HashMap<String, Object>(); 
+
+		try {
+			ois = new ObjectInputStream(
+					new GZIPInputStream(
+						context.openFileInput(SavedOptionsFileName)));
+			byte[] sgn = new byte[2];
+			ois.read(sgn);
+			if (!Arrays.equals(sgn, signature))
+				throw new IllegalStateException ("Wrong signature");
+			sgn = null;
+			
+			if (ois.readUnsignedShort() > version)
+				throw new IllegalStateException ("Incompatible version");
+
+			for (;;) 
+				allValues.put(ois.readUTF(), ois.readObject());
+			
+		} catch (FileNotFoundException ex) {
+		} catch (EOFException ex) {
+		} catch (Exception ex) { ex.printStackTrace(); }
+			
+		if (ois != null)
+			try {ois.close();} catch (IOException ex) {}
+		
 		for (Option opt : allOptions) {
 			String key = opt.getKey();
-			Object dfltValue = opt.getDefaultValue();
-			opt.setValue((opt instanceof TextOption)
-					? sprefs.getString(key, (String)dfltValue) 
-					: sprefs.getInt(key, (Integer)dfltValue)); 
+			if (allValues.containsKey(key))
+				opt.setValue(allValues.get(key));
+			else
+				opt.setDefaultValue();
 		}
 	}
 		
+//	public void savePreferences() {
+//		SharedPreferences.Editor editor =
+//				context.getSharedPreferences(SharedPrefsName, Context.MODE_PRIVATE).edit();
+//		for (Option opt : allOptions) {
+//			String key = opt.getKey();
+//			Object value = opt.getValue();
+//			if (opt instanceof TextOption)
+//				editor.putString(key, (String)value);
+//			else
+//				editor.putInt(key, (Integer)value);
+//		}
+//		editor.commit();
+//	}
+
 	public void savePreferences() {
-		SharedPreferences.Editor editor =
-				context.getSharedPreferences(SharedPrefsName, Context.MODE_PRIVATE).edit();
-		for (Option opt : allOptions) {
-			String key = opt.getKey();
-			Object value = opt.getValue();
-			if (opt instanceof TextOption)
-				editor.putString(key, (String)value);
-			else
-				editor.putInt(key, (Integer)value);
-		}
-		editor.commit();
+		ObjectOutputStream oos = null;
+
+		try {
+			oos = new ObjectOutputStream(
+					new GZIPOutputStream(
+						context.openFileOutput(SavedOptionsFileName, Context.MODE_PRIVATE)));
+			oos.write(signature);
+			oos.writeShort(version);
+
+			for (Option opt : allOptions) { 
+				oos.writeUTF(opt.getKey());
+				oos.writeObject(opt.getValue());
+			}
+			
+		} catch (Exception ex) { ex.printStackTrace(); }
+			
+		if (oos != null)
+			try {oos.close();} catch (IOException ex) {}
 	}
 
+	
 	public int getRefreshInterval() {
 		return refrIntervals[autoRefresh.getIndex()];
 	}
