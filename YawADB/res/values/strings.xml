@@ -13,6 +13,7 @@
     <string name="actStatDown">Wireless ADB is OFF</string>
     <string name="actNoAdbd">ADB daemon NOT running</string>
     <string name="actNoNetwork">No wireless networks</string>
+    <string name="actUndefined">Undefined</string>
     
     <string name="actEnable">Enable wireless ADB</string>
     <string name="actDisable">Disable wireless ADB</string>

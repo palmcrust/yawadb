@@ -18,45 +18,93 @@
 
 package com.palmcrust.yawadb;
 
+import java.io.Serializable;
+
 import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 
-public class StatusAnalyzer {
+public class StatusAnalyzer implements Serializable {
+	private static final long serialVersionUID = -872718362949627621L;
+	public static final int AnalyzeTimeout = 5000;
+
 	public static final int DumbADBPort = -1;
 	public static final int DefaultADBPort = 5555;
+
 
 	public static final String NetworkNameDefault = "wifi";
 	public static enum Status {UNDEFINED, UP, DOWN, NO_NETWORK, NO_ADBD}
 	
-	private Context context; 
-	private Status curStatus = Status.UNDEFINED;
-	private String ipAddress;
-	private int portNumber;
+	protected transient Context context; 
+	private transient AnalyzerThread anThread = null;
+	
+	protected Status curStatus = Status.UNDEFINED;
+	protected String ipAddress;
+	protected int portNumber;
+	
 	
 	public StatusAnalyzer(Context context) {
 		this.context = context;
 	}
-	
-	public Status analyze() {
-		// Get port number
-		String portNumberStr = Utils.getProp("service.adb.tcp.port");
-		portNumber = -1;
-		if (!Utils.isEmpty(portNumberStr)) 
-			try {
-				portNumber = Integer.parseInt(portNumberStr);
-			} catch(NumberFormatException ex) {	}
 
-		ipAddress = ipAddressFromWifiManager(context);
-		if (ipAddress == null) 	return (curStatus = Status.NO_NETWORK); 
-
-		// Is adbd running?
-		if (Utils.getAdbdPid() < 0)	return (curStatus = Status.NO_ADBD);
-
-		curStatus =  (portNumber > 0) ? Status.UP : Status.DOWN;
-		return curStatus;
+	public StatusAnalyzer(Context context, StatusAnalyzer wAnalyzer) {
+		this(context);
+		curStatus = wAnalyzer.curStatus;
+		ipAddress = wAnalyzer.ipAddress;
+		portNumber = wAnalyzer.portNumber; 
 	}
 
+	
+	public boolean analyze() {
+		
+		synchronized(this) {
+			if (anThread == null || !anThread.isAlive()) { 
+				anThread = new AnalyzerThread();
+				anThread.start();
+			}
+		}
+
+		try {
+			anThread.join(AnalyzeTimeout);
+			return (curStatus != Status.UNDEFINED);
+		} catch (InterruptedException ex) {
+			return false;
+		}
+	}
+
+	protected class AnalyzerThread extends Thread {
+		public void run() {
+			curStatus = Status.UNDEFINED;
+			
+			String portNumberStr = Utils.getProp("service.adb.tcp.port");
+			portNumber = -1;
+			if (!Utils.isEmpty(portNumberStr)) 
+				try {
+					portNumber = Integer.parseInt(portNumberStr);
+				} catch(NumberFormatException ex) {	}
+
+			ipAddress = ipAddressFromWifiManager();
+
+			if (ipAddress == null) 	
+				curStatus = Status.NO_NETWORK; 
+			else
+			// Is adbd running?
+			if (Utils.getAdbdPid() < 0)
+				curStatus = Status.NO_ADBD;
+			// Got IP address and adbd is running
+			else
+				curStatus =  (portNumber > 0) ? Status.UP : Status.DOWN;
+		}
+	}
+	
+	public void interrupt() {
+		synchronized(this) {
+			if (anThread != null)
+				anThread.interrupt();
+		}
+	}
+
+	
 	public Status getStatus() {
 		return curStatus; 
 	}
@@ -81,7 +129,7 @@ public class StatusAnalyzer {
 	}
 		
 
-	private static String ipAddressFromWifiManager(Context context) {
+	protected String ipAddressFromWifiManager() {
 		WifiManager wfm = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 		if (wfm == null) return null;
 		WifiInfo wfi = wfm.getConnectionInfo();

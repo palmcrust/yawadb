@@ -16,6 +16,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
+        android:paddingRight="3dp"
         android:gravity="center_vertical"
 		android:textSize="@dimen/boxTitleTxtSize"    
 		android:textStyle="bold|italic"

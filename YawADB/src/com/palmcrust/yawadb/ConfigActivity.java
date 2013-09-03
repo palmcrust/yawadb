@@ -25,6 +25,7 @@ import android.text.Editable;
 import android.text.InputFilter;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
+import android.util.DisplayMetrics;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,7 +48,9 @@ public class ConfigActivity extends Activity {
 		oldPort = options.portNumber.getIntValue();
 		oldAutoUsb=options.getAutoUsbValue();
 		asWidget = getIntent().getBooleanExtra(YawAdbConstants.AsWidgetExtra, false);
-		setContentView(R.layout.config);
+		DisplayMetrics dm = rsrc.getDisplayMetrics();
+		boolean isNarrow = (dm.widthPixels <= 240);
+		setContentView(isNarrow ? R.layout.config_narrow : R.layout.config);
 		populateFields();
 		findViewById(R.id.reset).setOnClickListener(resetClickListener);
 	}

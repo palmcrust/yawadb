@@ -19,6 +19,9 @@
 
 package com.palmcrust.yawadb;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -37,21 +40,36 @@ import com.palmcrust.yawadb.StatusAnalyzer.Status;
 
 public class PopupActivity extends Activity  {
 	private static final int ConfigActivityRequestCode = 666;
-	
-	protected boolean asWidget;
+	private static final int TurnoffTimeout = 60000;		// 1 minute
+
+	private Timer timer;
+	private TimerTask ttask;
+	protected boolean asWidget = false;
 
 	private Thread adbThread;
 	private BroadcastReceiver bcastReceiver;
+	protected StatusAnalyzer analyzer;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		StatusAnalyzer wAnalyzer = (StatusAnalyzer) getIntent().getSerializableExtra(YawAdbConstants.StatusAnalyzerExtra);
+		if (wAnalyzer == null) {
+			analyzer = new StatusAnalyzer(this);
+			analyzer.analyze();
+		} else {
+			asWidget = true;
+			analyzer = new StatusAnalyzer(this, wAnalyzer);
+		}
+		
 		setContentView(R.layout.list);
 		adbThread = null;
-		asWidget = getIntent().getBooleanExtra(YawAdbConstants.AsWidgetExtra, false);
-
-		refreshText();
+		ttask = null;
+		
+		timer = new Timer();
+		
+		refreshText(); 
 
 		bcastReceiver= new PopupActivityBroadcastReceiver(this);
 		IntentFilter filter = new IntentFilter();
@@ -59,6 +77,7 @@ public class PopupActivity extends Activity  {
 		filter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED); 
 		filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 		registerReceiver(bcastReceiver, filter);
+		
 
 		findViewById(R.id.actConfig).setOnClickListener(clickListener);
 		findViewById(R.id.actInfo).setOnClickListener(clickListener);
@@ -69,15 +88,17 @@ public class PopupActivity extends Activity  {
 		sendBroadcast(bcastedIntent);
 	}
 	
-	protected StatusAnalyzer refreshText() {	
+	protected void refreshText() {	
+		analyzer.analyze();
+			
 		Resources rsrc = getResources();
-		StatusAnalyzer analyzer = new StatusAnalyzer(this);
-		Status stat = analyzer.analyze();
-						
+		
 		TextView tv = (TextView) findViewById(R.id.status);
 		boolean toggleModeEnabled = true; 
 		int colorResId = R.color.itemDisabledBkgr;
 
+		StatusAnalyzer.Status stat = analyzer.getStatus(); 
+		
 		switch(stat) {
 			case UP:
 				tv.setText(rsrc.getString(R.string.actStatUp,
@@ -93,11 +114,15 @@ public class PopupActivity extends Activity  {
 				tv.setText(R.string.actNoAdbd);
 				toggleModeEnabled = false;
 				break;
-				
-			default:
+
+			case NO_NETWORK:	
 				tv.setText(R.string.actNoNetwork);
 				toggleModeEnabled = analyzer.isWirelessActive();
 				break;
+				
+			default:	
+				tv.setText(R.string.actUndefined);
+				toggleModeEnabled = false;
 		}
 		
 		tv.setOnClickListener(clickListener);
@@ -122,10 +147,34 @@ public class PopupActivity extends Activity  {
 			tv.setBackgroundColor(rsrc.getColor(colorResId));
 		} else
 			tv.setVisibility(View.GONE);
-
-		return analyzer;
 	}
 
+	
+
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+	
+		if (asWidget) {
+			if (hasFocus) { 
+				ttask = new PopupActivityTimerTask();
+				timer.schedule(ttask, TurnoffTimeout);
+			} else
+			if (ttask != null) {
+				ttask.cancel();
+				ttask = null;
+			}
+		}
+	}
+
+	protected class PopupActivityTimerTask  extends TimerTask {
+		public void run() {
+			 terminate();
+			 finish();
+		}
+	}
+	
+	
 
 	private final View.OnClickListener clickListener = new View.OnClickListener() {
 
@@ -167,8 +216,9 @@ public class PopupActivity extends Activity  {
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK && adbThread != null) {
-			adbThread.interrupt();
-			adbThread = null;
+			terminate();
+			finish();
+			return true;
 		}
 		return super.onKeyDown(keyCode, event);
 	}
@@ -176,11 +226,36 @@ public class PopupActivity extends Activity  {
 	
 	@Override
 	public void onDestroy() {
-		unregisterReceiver(bcastReceiver);
-		if (adbThread != null) adbThread.interrupt();
+		terminate();
 		super.onDestroy();
 	}
-	
+
+	protected void terminate() {
+		if (ttask != null) {
+			ttask.cancel();
+			ttask = null;
+		}
+
+		if (timer != null) {
+			timer.cancel();
+			timer = null;
+		}
+
+		if (bcastReceiver != null) {
+			unregisterReceiver(bcastReceiver);
+			bcastReceiver = null;
+		}
+		
+		if (adbThread != null) {
+			adbThread.interrupt();
+			adbThread = null;
+		}
+
+		if (analyzer != null) {
+			analyzer.interrupt();
+			analyzer = null;
+		}
+	}
 	
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -192,7 +267,7 @@ public class PopupActivity extends Activity  {
 				boolean newPort= data.getBooleanExtra(YawAdbConstants.NewPortNumberExtra, false);
 			
 				if (newAutoUsb || newPort) {
-					StatusAnalyzer analyzer = refreshText();
+					refreshText();
 				
 					switch(analyzer.getStatus()) {
 						case NO_NETWORK:
@@ -231,13 +306,13 @@ public class PopupActivity extends Activity  {
 		
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			StatusAnalyzer analyzer = activity.refreshText();
+			activity.refreshText();
 			if (activity.asWidget && !activity.isFinishing() && 
 				intent.getAction().equals(YawAdbConstants.AdbModeChangedAction) &&
 				intent.getBooleanExtra(YawAdbConstants.ExplicitExtra, false)) { 
 				(new Handler()).postDelayed(new Runnable() {
 					public void run() {activity.finish();}},
-					(analyzer.getStatus() == Status.UP) ? AfterUpdateTimeoutUp : AfterUpdateTimeoutDown);
+					(activity.analyzer.getStatus() == Status.UP) ? AfterUpdateTimeoutUp : AfterUpdateTimeoutDown);
 			}	
 		}
 	}

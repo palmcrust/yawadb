@@ -47,6 +47,9 @@ public class YawAdbService extends Service {
 	protected int refrInterval;
 	private PendingIntent onClickIntent;
 	private AdbModeChanger modeChanger;
+	protected StatusAnalyzer analyzer;
+
+	
 	private static final String LogTag = "YawADB";
 	private static final String MsgNullIntent=" Null intent at \'%s\'! Ignoring the call";
 
@@ -74,6 +77,7 @@ public class YawAdbService extends Service {
 	}
 	
 	private void handleStartCommand(Intent intent) {
+		analyzer = new StatusAnalyzer(this);
 		appWidgetManager = AppWidgetManager.getInstance(this);
 		views = new RemoteViews(getPackageName(), R.layout.widget);
 		providerCompName = intent.getParcelableExtra(YawAdbConstants.ComponentNameExtra);
@@ -82,8 +86,7 @@ public class YawAdbService extends Service {
 		modeChanger = null;
 		refrThread = null;
 
-		processOptions();
-		initRefreshStatus(true);
+		processOptions(true);
 		
 		bcastReceiver= new WidgetServiceBroadcastReceiver(this);
 		IntentFilter filter = new IntentFilter();
@@ -102,13 +105,13 @@ public class YawAdbService extends Service {
 
 	}
 			
-	protected void processOptions() {
+	protected void processOptions(boolean forceRefresh) {
 		// We ALWAYS restart the thread in order to reset ticks!
 		terminateAutoRefresh();
 		
 		YawAdbOptions options = new YawAdbOptions(this);
 		autoUsb = options.getAutoUsbValue();
-		if (autoUsb) initRefreshStatus(false); // To disable WADB is necessary
+		updateStatus(forceRefresh); // To disable WADB is necessary
 		
 		refrInterval = options.getRefreshInterval();
 		startAutoRefreshIfRequested();
@@ -155,17 +158,16 @@ public class YawAdbService extends Service {
 		}
 	}
 	
-	
-	protected synchronized void initRefreshStatus(boolean force) {
-		if (refrThread != null)
-			refrThread.updateStatus(force);
-		else
-			refreshStatus(force);
+	protected boolean updateStatus(boolean force) {
+		boolean success = analyzer.analyze();
+		if (success) refreshStatus(force);
+		return success;
 	}
 	
-	protected synchronized void refreshStatus(boolean force) {
-		StatusAnalyzer analyzer = new StatusAnalyzer(this);
-		StatusAnalyzer.Status stat = analyzer.analyze();
+	
+	protected void refreshStatus(boolean force) {
+		StatusAnalyzer.Status stat = analyzer.getStatus();
+
 		int newImageResId = (stat == StatusAnalyzer.Status.UP) ? 
 				R.drawable.wireless_up : R.drawable.wireless_down;
 
@@ -200,7 +202,8 @@ public class YawAdbService extends Service {
 	protected void startPopupActivity() {
 		Intent intent = new Intent(this, PopupActivity.class);
 		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		intent.putExtra(YawAdbConstants.AsWidgetExtra, true);
+//		intent.putExtra(YawAdbConstants.AsWidgetExtra, true);
+		intent.putExtra(YawAdbConstants.StatusAnalyzerExtra, analyzer);
 		startActivity(intent);
 	}
 
@@ -217,7 +220,7 @@ public class YawAdbService extends Service {
 			String action = intent.getAction();
 
 			if (action.equals(YawAdbConstants.OptionsChangedAction)) 
-				service.processOptions();
+				service.processOptions(false);
 			else
 			if (action.equals(Intent.ACTION_SCREEN_OFF)) 
 				service.terminateAutoRefresh();
@@ -228,7 +231,7 @@ public class YawAdbService extends Service {
 				//	Intent.ACTION_AIRPLANE_MODE_CHANGED 
 				//	Intent.ACTION_SCREEN_ON 
 				//  ConnectivityManager.CONNECTIVITY_ACTION  
-				service.initRefreshStatus(false);
+				service.updateStatus(false);
 
 				if (action.equals(YawAdbConstants.PopupAction)) 
 					service.startPopupActivity();
@@ -264,41 +267,43 @@ public class YawAdbService extends Service {
 	}
 	//=========================================================================
 	private static class AutoRefreshThread extends Thread {
-		public static enum InterruptReason {UNDEFINED, UPDATE_STATUS, TERMINATE}
-		public InterruptReason reason = InterruptReason.UNDEFINED;
+//		public static enum InterruptReason {UNDEFINED, UPDATE_STATUS, TERMINATE}
+//		public InterruptReason reason = InterruptReason.UNDEFINED;
 		private WidgetServiceMessageHandler handler;
 		private boolean force=false; 
-		private int sleepTimeout; 
+		private int sleepTimeout;
+		private StatusAnalyzer analyzer;
 		
 		protected AutoRefreshThread(YawAdbService service, int sleepTimeout) {
 			super();
 			handler = new WidgetServiceMessageHandler(service);
 			this.sleepTimeout = sleepTimeout;
+			this.analyzer = service.analyzer;
 		}
 
-		public synchronized void updateStatus(boolean force) {
-			this.force = force;
-			reason = InterruptReason.UPDATE_STATUS;
-			interrupt();	
-		}
+//		public synchronized void updateStatus(boolean force) {
+//			this.force = force;
+//			reason = InterruptReason.UPDATE_STATUS;
+//			interrupt();	
+//		}
 
 		public void terminate() {
-			reason = InterruptReason.TERMINATE;
+//			reason = InterruptReason.TERMINATE;
 			interrupt();	
 		}
 		
 		public void run() {
-			for (;;) {
-				try {
+			try {
+				while(analyzer.analyze()) {
 					Message msg = Message.obtain(
 						handler, WidgetServiceMessageHandler.WHAT_SET_APPEARANCE, force ? 1: 0, 0);
 					msg.sendToTarget();
 					force = false;
 					Thread.sleep(sleepTimeout);
-				} catch (InterruptedException ex) {
-					if (reason != InterruptReason.UPDATE_STATUS)
-						break;
 				}
+			} catch (InterruptedException ex) {
+//					if (reason != InterruptReason.UPDATE_STATUS)
+//						break;
 			}
 		}
 	}

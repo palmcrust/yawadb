@@ -6,7 +6,14 @@
     <dimen name="listStatTxtSize">18dp</dimen>
     <dimen name="listActnTxtSize">20dp</dimen>
     
-    <dimen name="configTitleTxtSize">20dp</dimen>
+    <dimen name="confWidthNarrow">220dp</dimen>
+    <dimen name="confTitleTxtSizeNarrow">17dp</dimen>
+    <dimen name="boxTitleTxtSizeNarrow">16dp</dimen>
+    <dimen name="boxValueTxtSizeNarrow">18dp</dimen>
+    
+    
+    <dimen name="confWidth">300dp</dimen>
+    <dimen name="confTitleTxtSize">20dp</dimen>
     <dimen name="boxTitleTxtSize">18dp</dimen>
     <dimen name="boxValueTxtSize">20dp</dimen>
     <dimen name="configPaddingVert">4dp</dimen>    

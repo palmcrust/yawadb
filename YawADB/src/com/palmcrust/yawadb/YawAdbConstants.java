@@ -22,6 +22,7 @@ package com.palmcrust.yawadb;
 
 public class YawAdbConstants {
 	public static final String AsWidgetExtra = "com.palmcrust.yawadb.extra.FromWidget";
+	public static final String StatusAnalyzerExtra = "com.palmcrust.yawadb.extra.StatusAnalyzer";
 	public static final String ComponentNameExtra = "com.palmcrust.yawadb.extra.ComponentName";
 	public static final String OnClickIntentExtra = "com.palmcrust.yawadb.extra.OnClickIntent";
 	public static final String ExplicitExtra = "com.palmcrust.yawadb.extra.Explicit";

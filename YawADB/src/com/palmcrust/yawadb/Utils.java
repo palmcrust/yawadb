@@ -29,16 +29,19 @@ import android.content.Context;
 import android.widget.Toast;
 
 public class Utils {
-	@SuppressWarnings("deprecation")
-	public static int getAPIVersion() {
-		try {
-			return android.os.Build.VERSION.class.getField("SDK_INT").getInt(null);
-		} catch (Exception ex) {
-			return Integer.parseInt(android.os.Build.VERSION.SDK);
-		}
-	}
+//	public static int getAPIVersion() {
+//		try {
+//			return android.os.Build.VERSION.class.getField("SDK_INT").getInt(null);
+//		} catch (Exception ex) {
+//			try {
+//				return Integer.parseInt(
+//					(String)android.os.Build.VERSION.class.getField("SDK").get(null));
+//			} catch(Exception ex1) {
+//				return 0;
+//			}
+//		}
+//	}
 	
-			
 	public static int getAdbdPid() {
 		 Process p = runCommand("ps", "adbd");
 		 if (p==null) return -1;

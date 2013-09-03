@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="us-ascii"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="300dp"
+    android:layout_width="@dimen/confWidth"
     android:layout_height="wrap_content"
     android:background="@color/paneBkgr"
     android:orientation="vertical" >
@@ -11,7 +11,7 @@
 	    android:text="@string/configTitle"
 	    android:textColor="@color/titleConfigTxt"
   		android:background="@color/itemConfigBkgr"
-  		android:textSize="@dimen/configTitleTxtSize"
+  		android:textSize="@dimen/confTitleTxtSize"
   		android:textStyle="bold"/>
 	    	   
     <include android:id="@+id/optPortNumber" layout="@layout/edit_box"/> 
@@ -28,7 +28,7 @@
 	    android:text="@string/optReset"
 	    android:textColor="@color/item_reset_txt"
   		android:background="@color/itemConfigBkgr"
-  		android:textSize="@dimen/configTitleTxtSize"
+  		android:textSize="@dimen/confTitleTxtSize"
   		android:textStyle="bold"
   		android:clickable="true"
   		android:focusable="true" />
